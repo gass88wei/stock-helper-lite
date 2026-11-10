@@ -1,0 +1,19 @@
+{
+  "name": "stock-helper-lite",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "轻量股票基金盯盘助手 (MV3)",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "api-test": "bash scripts/api-test.sh"
+  },
+  "dependencies": {
+    "vue": "^3.4.31"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.5",
+    "vite": "^5.3.4"
+  }
+}

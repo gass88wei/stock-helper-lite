@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "盯盘助手 Lite - 股票基金行情",
+  "description": "轻量股票基金盯盘：自选列表 / 实时行情 / 价格提醒 / 收益角标",
+  "version": "0.1.0",
+  "icons": {
+    "16": "icons/logo-128.png",
+    "48": "icons/logo-128.png",
+    "128": "icons/logo-128.png"
+  },
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_title": "盯盘助手 Lite",
+    "default_icon": {
+      "19": "icons/logo-128.png",
+      "38": "icons/logo-128.png"
+    }
+  },
+  "options_page": "src/options/index.html",
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": ["storage", "alarms", "notifications", "contextMenus"],
+  "host_permissions": [
+    "https://push2.eastmoney.com/*",
+    "https://push2his.eastmoney.com/*",
+    "https://fundgz.1234567.cn/*",
+    "https://fundmobapi.eastmoney.com/*",
+    "https://searchapi.eastmoney.com/*",
+    "https://fundsuggest.eastmoney.com/*",
+    "http://127.0.0.1/*"
+  ]
+}
