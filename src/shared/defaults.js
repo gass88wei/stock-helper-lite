@@ -18,7 +18,8 @@ export const STOCK_COLUMNS = {
   hsl: ['换手率', false],
   dtsy: ['当天收益', false],
   zsyl: ['收益率', false],
-  zsy: ['总收益', false]
+  zsy: ['总收益', false],
+  dividendYield: ['分红率', false]
 }
 
 export const FUND_COLUMNS = {
@@ -49,6 +50,12 @@ export const DEFAULT_SETTINGS = {
   zuotPort: 27518, // 做T联动 API 端口（zuot-terminal -api-port 指定）
   stockColumns: Object.fromEntries(Object.entries(STOCK_COLUMNS).map(([k, [, v]]) => [k, v])),
   fundColumns: Object.fromEntries(Object.entries(FUND_COLUMNS).map(([k, [, v]]) => [k, v]))
+}
+
+// 分红筛选配置（用户自选池固定，可先手动录入，后续对接东财分红接口自动抓取）
+export const DIVIDEND_SETTINGS = {
+  threshold: 3.5, // 分红收益率阈值（%），超过则高亮标记“高分红”
+  enable: true // 是否启用分红列显示
 }
 
 // 默认自选股（首次安装时预置到“默认分组”）

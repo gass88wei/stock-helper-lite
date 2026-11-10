@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useStore, notifyStoreChanged } from '../shared/useStore.js'
 import { STOCK_COLUMNS, FUND_COLUMNS, DEFAULT_SETTINGS, DEFAULT_INDICES } from '../shared/defaults.js'
 import { searchStocks } from '../shared/api.js'
@@ -17,6 +17,47 @@ const changed = () => notifyStoreChanged()
 // ---------- 列配置 ----------
 const stockColList = Object.entries(STOCK_COLUMNS)
 const fundColList = Object.entries(FUND_COLUMNS)
+
+// ---------- 分红数据管理（手动录入，供分红率列使用） ----------
+const divList = ref([])
+let divTimer = null
+
+const loadDividends = async () => {
+  const d = await chrome.storage.local.get('quotes')
+  const dividends = d.quotes?.dividends || {}
+  divList.value = Object.entries(dividends).map(([code, v]) => ({
+    code,
+    perShare: Number(v.perShare) || 0,
+    year: String(v.year || ''),
+    ...(v.yield != null ? { yield: v.yield } : {})
+  }))
+}
+
+const saveDividends = async () => {
+  const dividends = {}
+  for (const d of divList.value) {
+    if (!d.code) continue
+    dividends[d.code] = {
+      perShare: d.perShare,
+      year: d.year,
+      yield: d.yield
+    }
+  }
+  await chrome.storage.local.set({ quotes: { dividends } })
+  changed()
+}
+
+const addDivRow = () => {
+  divList.value.push({ code: '', perShare: 0, year: new Date().getFullYear().toString() })
+}
+const delDivRow = (i) => {
+  divList.value.splice(i, 1)
+  saveDividends()
+}
+const saveDivRow = async (i) => {
+  await saveDividends()
+  changed()
+}
 
 // ---------- 指数管理 ----------
 const idxQuery = ref('')
@@ -167,6 +208,10 @@ const importFile = async (ev) => {
   ev.target.value = ''
 }
 
+onMounted(() => {
+  loadDividends()
+})
+
 const version = computed(() => chrome.runtime.getManifest().version)
 </script>
 
@@ -242,6 +287,77 @@ const version = computed(() => chrome.runtime.getManifest().version)
         <label>API 端口</label>
         <input type="number" min="1024" max="65535" v-model.number="state.settings.zuotPort" @change="changed" />
         <span class="tip">需 zuot-terminal（联动版）正在运行；只读其持仓成本，自选行点「T」可把个股加入做T终端（仅本机 127.0.0.1 通信）</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>做T终端联动</h2>
+      <div class="row">
+        <label><input type="checkbox" v-model="state.settings.zuotLink" @change="changed" /> 联动本地「做T全能终端」</label>
+      </div>
+      <div class="row">
+        <label>API 端口</label>
+        <input type="number" min="1024" max="65535" v-model.number="state.settings.zuotPort" @change="changed" />
+        <span class="tip">需 zuot-terminal（联动版）正在运行；仅本机 127.0.0.1 只读访问，自选行点「T」可把个股加入做T终端</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>分红筛选</h2>
+      <div class="row">
+        <label>分红收益率阈值（%）</label>
+        <input type="number" step="0.1" v-model.number="state.settings.dividendSettings.threshold" @change="changed" />
+        <span class="tip">超过该阈值的股票在表格中高亮标记（默认 3.5%）</span>
+      </div>
+      <div class="row">
+        <label>显示分红率列</label>
+        <input type="checkbox" v-model="state.settings.stockColumns.dividendYield" @change="changed" />
+        <span class="tip">在股票表格中显示“分红率”列</span>
+      </div>
+      <div class="row"><span class="tip">手动录入每股分红和分红年份，系统自动计算分红收益率（每股分红 ÷ 当前价格 × 100%）</span></div>
+      <div class="dividend-list">
+        <table>
+          <thead>
+            <tr>
+              <th>代码</th>
+              <th>名称</th>
+              <th>每股分红（元）</th>
+              <th>分红年份</th>
+              <th>分红收益率（%）</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(d, i) in divList" :key="i">
+              <td>
+                <input v-model="d.code" placeholder="如 600008" class="cell-input" style="width: 80px" />
+              </td>
+              <td>
+                <input v-model="d.name" placeholder="名称" class="cell-input" style="width: 100px" />
+              </td>
+              <td>
+                <input type="number" step="0.01" v-model.number="d.perShare" class="cell-input" style="width: 80px" />
+              </td>
+              <td>
+                <input v-model="d.year" class="cell-input" style="width: 80px" />
+              </td>
+              <td>
+                <span :class="{ up: d.yield != null && d.yield >= state.settings.dividendSettings.threshold }">
+                  {{ d.yield == null ? '--' : d.yield + '%' }}
+                </span>
+              </td>
+              <td>
+                <button class="danger" @click="delDivRow(i)">删除</button>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="5">
+                <button class="ghost" @click="addDivRow">＋ 添加一行</button>
+                <button class="primary" @click="saveDivRow">保存</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -367,4 +483,14 @@ button.ghost { border: none; color: var(--fg2); background: none; }
 .drop-row:hover { background: var(--hover); }
 .drop-row i { color: var(--fg2); font-style: normal; margin-left: 8px; font-size: 0.85em; }
 .about { color: var(--fg2); line-height: 1.7; margin: 0; }
+.dividend-list table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.dividend-list th,
+.dividend-list td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+.dividend-list th { background: var(--panel); color: var(--fg2); font-size: 0.85em; }
+.dividend-list td input { width: 100%; box-sizing: border-box; }
+.dividend-list td .up { color: var(--up); font-weight: 600; }
 </style>

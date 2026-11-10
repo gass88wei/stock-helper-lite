@@ -182,3 +182,59 @@ export async function searchFunds(q) {
       StockType: it.FundBaseInfo?.FTYPE || ''
     }))
 }
+
+/**
+ * 分红相关
+ */
+
+/**
+ * 计算分红收益率（%）
+ * perShare: 每股分红（元）
+ * price: 当前价格（元）
+ * 返回保留两位小数的百分比数值，如 4.23
+ */
+export function calcDividendYield(perShare, price) {
+  if (!perShare || !price || price <= 0) return null
+  return +((perShare / price) * 100).toFixed(2)
+}
+
+/**
+ * 获取个股分红/除权除息数据（东财接口预留）
+ * 返回 { code, perShare, year, yield, lastUpd }
+ * 注意：东财分红接口参数需根据实际情况调整，这里先做 skeleton
+ */
+export async function fetchDividendData(secid) {
+  if (!secid) return null
+  try {
+    // 预留：东财分红接口
+    // const url = `${PUSH2}/api/qt/stock/dividend/get?secid=${secid}...`
+    // 由于东财官方分红接口参数不确定，先返回 null，由 options 页手动录入
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 批量获取多个股票的分红数据
+ * 返回 { code: {perShare, year, yield, lastUpd} }
+ */
+export async function fetchDividendsBatch(secids, quotes) {
+  const out = {}
+  for (const secid of secids) {
+    const [market, code] = secid.split('.')
+    const d = await fetchDividendData(secid)
+    if (d) {
+      const q = quotes?.[secid]
+      const yld = d.perShare && q?.price ? calcDividendYield(d.perShare, q.price) : null
+      out[code] = {
+        code,
+        perShare: d.perShare,
+        year: d.year,
+        yield: yld,
+        lastUpd: Date.now()
+      }
+    }
+  }
+  return out
+}

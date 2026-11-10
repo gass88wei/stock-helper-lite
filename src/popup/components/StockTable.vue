@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { STOCK_COLUMNS } from '../../shared/defaults.js'
 import { fmtPrice, fmtPct, fmtMoney, clsFor } from '../../shared/market.js'
 import { stockDtsy, stockZsy, stockZsyl, stockCcje } from '../../shared/yield.js'
+import { calcDividendYield } from '../../shared/api.js'
 import Sparkline from './Sparkline.vue'
 import NoticePopover from './NoticePopover.vue'
 
@@ -48,6 +49,13 @@ const cellText = (k, it) => {
     case 'zsy': {
       const v = stockZsy(it, q, props.settings)
       return { text: it.num ? fmtMoney(v) : '--', cls: clsFor(v) }
+    }
+    case 'dividendYield': {
+      const div = props.quotes?.dividends?.[it.code]
+      const yld = div?.yield
+      const text = yld == null ? '--' : yld + '%'
+      const cls = yld != null && yld >= (props.settings?.dividendSettings?.threshold ?? 3.5) ? 'up' : ''
+      return { text, cls }
     }
   }
   return { text: '--', cls: '' }

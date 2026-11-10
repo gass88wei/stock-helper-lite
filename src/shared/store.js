@@ -79,6 +79,7 @@ export async function getQuotes() {
       funds: {},
       sparkline: {}, // 基金估算涨跌幅的最近采样（迷你图）
       zuot: {}, // 做T联动：{code: {…持仓, market, price, zdf}}
+      dividends: {}, // 分红数据：{code: {perShare, year, yield, lastUpd}}
       updatedAt: 0
     }
   )
