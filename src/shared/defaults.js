@@ -51,7 +51,15 @@ export const DEFAULT_SETTINGS = {
   fundColumns: Object.fromEntries(Object.entries(FUND_COLUMNS).map(([k, [, v]]) => [k, v]))
 }
 
-export const DEFAULT_GROUPS = () => [{ id: 'g-default', name: '默认分组', items: [] }]
+// 默认自选股（首次安装时预置到“默认分组”）
+export const DEFAULT_STOCKS = [
+  { code: '600008', name: '宝武股份', market: '1', StockType: '沪A' },
+  // 注意：“国泰海通”目前无单独证券代码，国泰君安（601211）与海通证券（600837）
+  // 正在吸收合并，合并后大概率以国泰君安代码存续，这里暂用 601211
+  { code: '601211', name: '国泰君安', market: '1', StockType: '沪A' }
+]
+
+export const DEFAULT_GROUPS = () => [{ id: 'g-default', name: '默认分组', items: [...DEFAULT_STOCKS] }]
 
 export const STOCK_NOTICE_TYPES = [
   ['1', '股价涨到（元）'],
